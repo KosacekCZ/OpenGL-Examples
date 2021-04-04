@@ -35,6 +35,7 @@ public class Main {
 
         // Main game loop
         Game.init(window);
+        Game.draw(window);
         while (!GLFW.glfwWindowShouldClose(window)) {
             // Key input management
             if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_ESCAPE) == GLFW.GLFW_PRESS)
@@ -44,8 +45,10 @@ public class Main {
             GL33.glClearColor(0f, 0f, 0f, 1f);
             GL33.glClear(GL33.GL_COLOR_BUFFER_BIT);
 
-            Game.render(window);
-            Game.update(window);
+            for (int i = 0; i < 5; i++) {
+                Game.render(window);
+                Game.update(window);
+            }
 
             // Swap the color buffer -> screen tearing solution
             GLFW.glfwSwapBuffers(window);
