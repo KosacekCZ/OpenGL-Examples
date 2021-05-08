@@ -16,7 +16,7 @@ public class Main {
 
         // Create the window...
         // We can set multiple options with glfwWindowHint ie. fullscreen, resizability etc.
-        long window = GLFW.glfwCreateWindow(800, 600, "My first window", 0, 0);
+        long window = GLFW.glfwCreateWindow(1000, 1000, "My first window", 0, 0);
         if (window == 0) {
             GLFW.glfwTerminate();
             throw new Exception("Can't open window");
@@ -25,7 +25,7 @@ public class Main {
 
         // Tell GLFW, that we are using OpenGL
         GL.createCapabilities();
-        GL33.glViewport(0, 0, 800, 600);
+        GL33.glViewport(0, 0, 1000, 1000);
 
         // Resize callback
         GLFW.glfwSetFramebufferSizeCallback(window, (win, w, h) -> {

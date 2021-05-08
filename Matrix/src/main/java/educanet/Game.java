@@ -8,41 +8,56 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import org.lwjgl.stb.STBImage;
 
 public class Game {
 
     private static final float[] vertices = {
-            0.5f, 0.5f, 0.0f, // 0 -> Top right
-            0.5f, -0.5f, 0.0f, // 1 -> Bottom right
-            -0.5f, -0.5f, 0.0f, // 2 -> Bottom left
-            -0.5f, 0.5f, 0.0f, // 3 -> Top left
+            0.15f, 0.15f, 0.0f, // 0 -> Top right
+            0.15f, -0.15f, 0.0f, // 1 -> Bottom right
+            -0.15f, -0.15f, 0.0f, // 2 -> Bottom left
+            -0.15f, 0.15f, 0.0f, // 3 -> Top left
     };
+    ;
 
     private static final float[] colors = {
             1.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 1.0f,
-            0.0f, 0.0f, 0.0f,
+            1.0f, 1.0f, 0.0f,
+            1.0f, 0.0f, 0.0f,
+            1.0f, 1.0f, 0.0f,
     };
+
 
     private static final int[] indices = {
             0, 1, 3, // First triangle
             1, 2, 3 // Second triangle
     };
 
+    private static final float[] texCoords = {
+            1.0f, 1.0f,
+            1.0f, 0.0f,
+            0.0f, 1.0f,
+            0.0f, 0.0f
+    };
+
+    private static int direction = 0; // default right sloped up
     private static int squareVaoId;
     private static int squareVboId;
     private static int squareEboId;
     private static int colorsId;
     private static int uniformMatrixLocation;
+    private static float posX;
+    private static float posY;
 
     private static Matrix4f matrix = new Matrix4f()
             .identity()
             .translate(0.25f, 0.25f, 0.25f);
     // 4x4 -> FloatBuffer of size 16
+
     private static FloatBuffer matrixFloatBuffer = BufferUtils.createFloatBuffer(16);
 
     public static void init(long window) {
+
         // Setup shaders
         Shaders.initShaders();
 
@@ -66,6 +81,8 @@ public class Game {
         GL33.glBufferData(GL33.GL_ELEMENT_ARRAY_BUFFER, ib, GL33.GL_STATIC_DRAW);
 
         // Change to VBOs...
+
+
         // Tell OpenGL we are currently writing to this buffer (vboId)
         GL33.glBindBuffer(GL33.GL_ARRAY_BUFFER, squareVboId);
 
@@ -78,8 +95,7 @@ public class Game {
         GL33.glVertexAttribPointer(0, 3, GL33.GL_FLOAT, false, 0, 0);
         GL33.glEnableVertexAttribArray(0);
 
-        // Clear the buffer from the memory (it's saved now on the GPU, no need for it here)
-        MemoryUtil.memFree(fb);
+
 
         // Change to Color...
         // Tell OpenGL we are currently writing to this buffer (colorsId)
@@ -96,32 +112,57 @@ public class Game {
 
         GL33.glUseProgram(Shaders.shaderProgramId);
 
-        // Sending Mat4 to GPU
         matrix.get(matrixFloatBuffer);
         GL33.glUniformMatrix4fv(uniformMatrixLocation, false, matrixFloatBuffer);
+
+        matrix = matrix.translate(0.0f, 0.5f, 0f);
+        posY += 0.5f;
 
         // Clear the buffer from the memory (it's saved now on the GPU, no need for it here)
         MemoryUtil.memFree(cb);
         MemoryUtil.memFree(fb);
+
     }
 
     public static void render(long window) {
 
+
+        matrix.get(matrixFloatBuffer);
+        GL33.glUniformMatrix4fv(uniformMatrixLocation, false, matrixFloatBuffer);
+
+
+
+
         // Draw using the glDrawElements function
         GL33.glBindVertexArray(squareVaoId);
         GL33.glDrawElements(GL33.GL_TRIANGLES, indices.length, GL33.GL_UNSIGNED_INT, 0);
+
     }
 
     public static void update(long window) {
-        if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_D) == GLFW.GLFW_PRESS) {
-            matrix = matrix.translate(0.01f, 0f, 0f);
-        } if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_A) == GLFW.GLFW_PRESS) {
-            matrix = matrix.translate(-0.01f, 0f, 0f);
+        if (posX > 0.6f || posX < -1.1f || posY > 0.65f || posY < -1.1f) direction++;
+
+        switch (direction % 4) {
+            case 0 -> {
+                matrix = matrix.translate(0.0002f, 0.0002f, 0f);
+                posX += 0.0002f;
+                posY += 0.0002f;
+            }
+            case 1 -> {
+                matrix = matrix.translate(-0.0002f, 0.0002f, 0f);
+                posX -= 0.0002f;
+                posY += 0.0002f;
+            }
+            case 2 -> {
+                matrix = matrix.translate(-0.0002f, -0.0002f, 0f);
+                posX -= 0.0002f;
+                posY -= 0.0002f;
+            }
+            case 3 -> {
+                matrix = matrix.translate(0.0002f, -0.0002f, 0f);
+                posX += 0.0002f;
+                posY -= 0.0002f;
+            }
         }
-
-        // TODO: Send to GPU only if position updated
-        matrix.get(matrixFloatBuffer);
-        GL33.glUniformMatrix4fv(uniformMatrixLocation, false, matrixFloatBuffer);
     }
-
 }
