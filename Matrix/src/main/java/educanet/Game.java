@@ -3,11 +3,16 @@ package educanet;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL33;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
+import java.io.FileInputStream;
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+
 import org.lwjgl.stb.STBImage;
 
 public class Game {
@@ -33,11 +38,12 @@ public class Game {
             1, 2, 3 // Second triangle
     };
 
-    private static final float[] texCoords = {
-            1.0f, 1.0f,
+    private static final float[] textCoords = {
             1.0f, 0.0f,
+            1.0f, 1.0f,
             0.0f, 1.0f,
-            0.0f, 0.0f
+            0.0f, 0.0f,
+
     };
 
     private static int direction = 0; // default right sloped up
@@ -46,6 +52,8 @@ public class Game {
     private static int squareEboId;
     private static int colorsId;
     private static int uniformMatrixLocation;
+    private static int textureIndicesId;
+    private static int textureId;
     private static float posX;
     private static float posY;
 
@@ -66,6 +74,11 @@ public class Game {
         squareVboId = GL33.glGenBuffers();
         squareEboId = GL33.glGenBuffers();
         colorsId = GL33.glGenBuffers();
+        textureIndicesId = GL33.glGenBuffers();
+        textureId = GL33.glGenTextures();
+
+        // load texture to memory
+        loadImage();
 
         // Get uniform location
         uniformMatrixLocation = GL33.glGetUniformLocation(Shaders.shaderProgramId, "matrix");
@@ -96,7 +109,6 @@ public class Game {
         GL33.glEnableVertexAttribArray(0);
 
 
-
         // Change to Color...
         // Tell OpenGL we are currently writing to this buffer (colorsId)
         GL33.glBindBuffer(GL33.GL_ARRAY_BUFFER, colorsId);
@@ -110,7 +122,20 @@ public class Game {
         GL33.glVertexAttribPointer(1, 3, GL33.GL_FLOAT, false, 0, 0);
         GL33.glEnableVertexAttribArray(1);
 
-        GL33.glUseProgram(Shaders.shaderProgramId);
+        GL33.glBindBuffer(GL33.GL_ARRAY_BUFFER, textureIndicesId);
+
+
+        // loading texture indices to gpu buffer
+        FloatBuffer tb = BufferUtils.createFloatBuffer(textCoords.length)
+                .put(textCoords)
+                .flip();
+
+        // Send the buffer (positions) to the GPU
+        GL33.glBufferData(GL33.GL_ARRAY_BUFFER, tb, GL33.GL_STATIC_DRAW);
+        GL33.glVertexAttribPointer(2, 2, GL33.GL_FLOAT, false, 0, 0);
+        GL33.glEnableVertexAttribArray(2);
+
+        MemoryUtil.memFree(tb);
 
         matrix.get(matrixFloatBuffer);
         GL33.glUniformMatrix4fv(uniformMatrixLocation, false, matrixFloatBuffer);
@@ -121,19 +146,16 @@ public class Game {
         // Clear the buffer from the memory (it's saved now on the GPU, no need for it here)
         MemoryUtil.memFree(cb);
         MemoryUtil.memFree(fb);
-
     }
 
     public static void render(long window) {
-
-
+        GL33.glUseProgram(Shaders.shaderProgramId);
         matrix.get(matrixFloatBuffer);
         GL33.glUniformMatrix4fv(uniformMatrixLocation, false, matrixFloatBuffer);
 
 
-
-
         // Draw using the glDrawElements function
+        GL33.glBindTexture(GL33.GL_TEXTURE_2D, textureId);
         GL33.glBindVertexArray(squareVaoId);
         GL33.glDrawElements(GL33.GL_TRIANGLES, indices.length, GL33.GL_UNSIGNED_INT, 0);
 
@@ -162,6 +184,28 @@ public class Game {
                 matrix = matrix.translate(0.0002f, -0.0002f, 0f);
                 posX += 0.0002f;
                 posY -= 0.0002f;
+            }
+        }
+    }
+
+    private static void loadImage() {
+        textureId = GL33.glGenTextures();
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            IntBuffer w = stack.mallocInt(1);
+            IntBuffer h = stack.mallocInt(1);
+            IntBuffer comp = stack.mallocInt(1);
+
+            ByteBuffer img = STBImage.stbi_load("resources/textures/texture.png", w, h, comp, 4);
+            if (img != null) {
+                img.flip();
+
+                GL33.glBindTexture(GL33.GL_TEXTURE_2D, textureId);
+                GL33.glTexImage2D(GL33.GL_TEXTURE_2D, 0, GL33.GL_RGBA, w.get(), h.get(), 0, GL33.GL_RGBA, GL33.GL_UNSIGNED_BYTE, img);
+                GL33.glGenerateMipmap(GL33.GL_TEXTURE_2D);
+
+                STBImage.stbi_image_free(img);
+            } else {
+                System.out.println("You vobrázekn't.");
             }
         }
     }
