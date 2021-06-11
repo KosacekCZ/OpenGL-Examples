@@ -12,10 +12,10 @@ import java.nio.IntBuffer;
 public class Game {
 
     private static final float[] vertices = {
-            0.5f, 0.5f, 0.0f, // 0 -> Top right
-            0.5f, -0.5f, 0.0f, // 1 -> Bottom right
+            0.125f, 0.125f, 0.0f, // 0 -> Top right
+            0.125f, -0.5f, 0.0f, // 1 -> Bottom right
             -0.5f, -0.5f, 0.0f, // 2 -> Bottom left
-            -0.5f, 0.5f, 0.0f, // 3 -> Top left
+            -0.5f, 0.125f, 0.0f, // 3 -> Top left
     };
 
     private static final float[] colors = {
@@ -35,6 +35,8 @@ public class Game {
     private static int squareEboId;
     private static int colorsId;
     private static int uniformMatrixLocation;
+    private static float pos = 0.0f;
+    private static int direction = 1;
 
     private static Matrix4f matrix = new Matrix4f()
             .identity()
@@ -112,16 +114,30 @@ public class Game {
         GL33.glDrawElements(GL33.GL_TRIANGLES, indices.length, GL33.GL_UNSIGNED_INT, 0);
     }
 
+
     public static void update(long window) {
-        if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_D) == GLFW.GLFW_PRESS) {
-            matrix = matrix.translate(0.01f, 0f, 0f);
-        } if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_A) == GLFW.GLFW_PRESS) {
-            matrix = matrix.translate(-0.01f, 0f, 0f);
+        switch (direction) {
+            case 1 -> {
+                if (pos < 1.0f) {
+                    matrix = matrix.translate(0.01f, 0f, 0f);
+                    pos += 0.01;
+                } else {
+                    direction = 0;
+                }
+            }
+            case 0 -> {
+                if (pos > -1.0f) {
+                    matrix = matrix.translate(-0.01f, 0f, 0f);
+                    pos -= 0.01f;
+                } else {
+                    direction = 1;
+                }
+            }
         }
 
-        // TODO: Send to GPU only if position updated
-        matrix.get(matrixFloatBuffer);
-        GL33.glUniformMatrix4fv(uniformMatrixLocation, false, matrixFloatBuffer);
-    }
+            // TODO: Send to GPU only if position updated
+            matrix.get(matrixFloatBuffer);
+            GL33.glUniformMatrix4fv(uniformMatrixLocation, false, matrixFloatBuffer);
+        }
 
-}
+    }
