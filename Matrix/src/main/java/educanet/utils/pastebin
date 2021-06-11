@@ -1,0 +1,12 @@
+if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_D) == GLFW.GLFW_PRESS) {
+            matrix = matrix.translate(0.0001f, 0f, 0f);
+        }
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_A) == GLFW.GLFW_PRESS) {
+            matrix = matrix.translate(-0.0001f, 0f, 0f);
+        }
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_W) == GLFW.GLFW_PRESS) {
+            matrix = matrix.translate(0.0f, 0.0001f, 0f);
+        }
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_S) == GLFW.GLFW_PRESS) {
+            matrix = matrix.translate(0.0f, -0.0001f, 0f);
+        }
